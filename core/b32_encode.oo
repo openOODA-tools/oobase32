@@ -1,0 +1,100 @@
+// # oobase32 Encoding Engine
+//
+// Logline: Encodes arbitrary byte sequences into Base32 text with optional padding and column wrapping.
+//
+// Setup: Pure algorithmic 5-bit bit-packing using native byte accessors and alphabet maps.
+//
+// Beats:
+//   1. Partition input byte streams into 5-byte (40-bit) quantums.
+//   2. Extract eight 5-bit symbol indices and translate to alphabet characters.
+//   3. Append RFC 4648 padding delimiters and format output with column wrapping.
+
+import "core/b32_alphabet.oo";
+
+pub fn b32_wrap_lines(text: String, wrap_cols: Int) -> String {
+    if wrap_cols <= 0 {
+        return text;
+    }
+    let n: Int = chars_len(text);
+    if n <= wrap_cols {
+        return text;
+    }
+    let mut out: String = "";
+    let mut i: Int = 0;
+    while i < n {
+        if i > 0 && (i % wrap_cols) == 0 {
+            out = out + "\n";
+        }
+        out = out + char_at(text, i);
+        i = i + 1;
+    }
+    return out;
+}
+
+pub fn b32_encode_stream(s: String, alphabet: String, include_padding: Bool, wrap_cols: Int) -> String {
+    let blen: Int = bytes_len(s);
+    if blen == 0 {
+        return "";
+    }
+    let mut out: String = "";
+    let mut i: Int = 0;
+
+    while i < blen {
+        let b0: Int = byte_at(s, i);
+        let mut b1: Int = 0;
+        let mut b2: Int = 0;
+        let mut b3: Int = 0;
+        let mut b4: Int = 0;
+
+        let rem: Int = blen - i;
+        if rem > 1 { b1 = byte_at(s, i + 1); }
+        if rem > 2 { b2 = byte_at(s, i + 2); }
+        if rem > 3 { b3 = byte_at(s, i + 3); }
+        if rem > 4 { b4 = byte_at(s, i + 4); }
+
+        let c0: Int = b0 / 8;
+        let c1: Int = ((b0 % 8) * 4) + (b1 / 64);
+        let c2: Int = (b1 % 64) / 2;
+        let c3: Int = ((b1 % 2) * 16) + (b2 / 16);
+        let c4: Int = ((b2 % 16) * 2) + (b3 / 128);
+        let c5: Int = (b3 % 128) / 4;
+        let c6: Int = ((b3 % 4) * 8) + (b4 / 32);
+        let c7: Int = b4 % 32;
+
+        let pad: Bool = include_padding && (alphabet != "crockford");
+
+        out = out + b32_char_at(alphabet, c0);
+        out = out + b32_char_at(alphabet, c1);
+
+        if rem == 1 {
+            if pad { out = out + "======"; }
+        } else if rem == 2 {
+            out = out + b32_char_at(alphabet, c2);
+            out = out + b32_char_at(alphabet, c3);
+            if pad { out = out + "===="; }
+        } else if rem == 3 {
+            out = out + b32_char_at(alphabet, c2);
+            out = out + b32_char_at(alphabet, c3);
+            out = out + b32_char_at(alphabet, c4);
+            if pad { out = out + "==="; }
+        } else if rem == 4 {
+            out = out + b32_char_at(alphabet, c2);
+            out = out + b32_char_at(alphabet, c3);
+            out = out + b32_char_at(alphabet, c4);
+            out = out + b32_char_at(alphabet, c5);
+            out = out + b32_char_at(alphabet, c6);
+            if pad { out = out + "="; }
+        } else {
+            out = out + b32_char_at(alphabet, c2);
+            out = out + b32_char_at(alphabet, c3);
+            out = out + b32_char_at(alphabet, c4);
+            out = out + b32_char_at(alphabet, c5);
+            out = out + b32_char_at(alphabet, c6);
+            out = out + b32_char_at(alphabet, c7);
+        }
+
+        i = i + 5;
+    }
+
+    return b32_wrap_lines(out, wrap_cols);
+}

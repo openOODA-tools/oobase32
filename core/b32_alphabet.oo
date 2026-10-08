@@ -1,0 +1,90 @@
+// # oobase32 Alphabet and Character Mapping Tables
+//
+// Logline: Alphabet definitions, normalizers, and symbol lookups for RFC 4648, Hex, and Crockford Base32.
+//
+// Setup: Pure string matrix lookups mapping 5-bit integer values (0..31) to characters.
+//
+// Beats:
+//   1. Expose RFC 4648 standard, extended hex, and Crockford Base32 alphabet strings.
+//   2. Normalize lowercase letters and Crockford visual collision characters (I, L, O).
+//   3. Convert between 5-bit integer values and alphabet character glyphs.
+
+pub fn alphabet_rfc4648() -> String {
+    return "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+}
+
+pub fn alphabet_hex() -> String {
+    return "0123456789ABCDEFGHIJKLMNOPQRSTUV";
+}
+
+pub fn alphabet_crockford() -> String {
+    return "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+}
+
+pub fn normalize_char(c: String, alphabet_name: String) -> String {
+    if c == "a" { return "A"; }
+    if c == "b" { return "B"; }
+    if c == "c" { return "C"; }
+    if c == "d" { return "D"; }
+    if c == "e" { return "E"; }
+    if c == "f" { return "F"; }
+    if c == "g" { return "G"; }
+    if c == "h" { return "H"; }
+    if c == "i" {
+        if alphabet_name == "crockford" { return "1"; }
+        return "I";
+    }
+    if c == "j" { return "J"; }
+    if c == "k" { return "K"; }
+    if c == "l" {
+        if alphabet_name == "crockford" { return "1"; }
+        return "L";
+    }
+    if c == "m" { return "M"; }
+    if c == "n" { return "N"; }
+    if c == "o" {
+        if alphabet_name == "crockford" { return "0"; }
+        return "O";
+    }
+    if c == "p" { return "P"; }
+    if c == "q" { return "Q"; }
+    if c == "r" { return "R"; }
+    if c == "s" { return "S"; }
+    if c == "t" { return "T"; }
+    if c == "u" { return "U"; }
+    if c == "v" { return "V"; }
+    if c == "w" { return "W"; }
+    if c == "x" { return "X"; }
+    if c == "y" { return "Y"; }
+    if c == "z" { return "Z"; }
+    if alphabet_name == "crockford" {
+        if c == "O" { return "0"; }
+        if c == "I" || c == "L" { return "1"; }
+    }
+    return c;
+}
+
+pub fn b32_char_at(alphabet_name: String, val: Int) -> String {
+    if val < 0 || val > 31 {
+        return "";
+    }
+    if alphabet_name == "hex" {
+        return char_at(alphabet_hex(), val);
+    }
+    if alphabet_name == "crockford" {
+        return char_at(alphabet_crockford(), val);
+    }
+    return char_at(alphabet_rfc4648(), val);
+}
+
+pub fn b32_val_of(alphabet_name: String, c: String) -> Int {
+    let norm: String = normalize_char(c, alphabet_name);
+    let alpha: String = if alphabet_name == "hex" {
+        alphabet_hex()
+    } else if alphabet_name == "crockford" {
+        alphabet_crockford()
+    } else {
+        alphabet_rfc4648()
+    };
+    return str_index_of(alpha, norm);
+}

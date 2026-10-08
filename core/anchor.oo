@@ -1,0 +1,18 @@
+// # oobase32 Core Subsystem Anchor
+//
+// Logline: Consolidates Base32 alphabets, 5-bit block encoding, and decode unpacking engines.
+//
+// Setup: Root barrel shim for core Base32 binary-to-text transformation domain.
+//
+// Beats:
+//   1. Re-export RFC 4648, Hex, and Crockford alphabet definitions and symbol normalizers.
+//   2. Re-export 5-bit block encoder with padding delimiters and line wrapping.
+//   3. Re-export Base32 decoder with character validation and byte reconstruction.
+
+import "core/b32_alphabet.oo";
+import "core/b32_encode.oo";
+import "core/b32_decode.oo";
+
+pub fn core_subsystem_version() -> String {
+    return "0.2.0";
+}

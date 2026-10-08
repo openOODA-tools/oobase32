@@ -1,0 +1,84 @@
+// # oobase32 Decoding Engine
+//
+// Logline: Decodes Base32 character sequences into original byte strings with strict validation.
+//
+// Setup: Pure algorithmic 5-bit to 8-bit unpacking with whitespace and padding tolerance.
+//
+// Beats:
+//   1. Filter and parse input characters into 5-bit value sequences.
+//   2. Validate symbols against active alphabet and reject invalid characters.
+//   3. Reconstruct 8-bit bytes from 5-bit symbol groups and emit owned string.
+
+import "core/b32_alphabet.oo";
+
+pub fn b32_decode_stream(s: String, alphabet: String) -> Result[String, String] {
+    let n: Int = chars_len(s);
+    if n == 0 {
+        return Ok("");
+    }
+    let mut vals: List[Int] = list_new();
+    let mut i: Int = 0;
+
+    while i < n {
+        let c: String = char_at(s, i);
+        if c == "=" || c == " " || c == "\t" || c == "\r" || c == "\n" || c == "-" {
+            i = i + 1;
+        } else {
+            let v: Int = b32_val_of(alphabet, c);
+            if v < 0 {
+                return Err("invalid Base32 character: " + c);
+            }
+            vals = list_push(vals, v);
+            i = i + 1;
+        }
+    }
+
+    let nv: Int = list_len(vals);
+    if nv == 0 {
+        return Ok("");
+    }
+
+    let mut buf: List[Int] = bytes_new();
+    let mut g: Int = 0;
+
+    while g < nv {
+        let left: Int = nv - g;
+        if left < 2 {
+            return Err("truncated Base32 input");
+        }
+        let v0: Int = list_get(vals, g);
+        let v1: Int = list_get(vals, g + 1);
+        let b0: Int = (v0 * 8) + (v1 / 4);
+        buf = bytes_push(buf, b0);
+
+        if left >= 4 {
+            let v2: Int = list_get(vals, g + 2);
+            let v3: Int = list_get(vals, g + 3);
+            let b1: Int = ((v1 % 4) * 64) + (v2 * 2) + (v3 / 16);
+            buf = bytes_push(buf, b1);
+        }
+        if left >= 5 {
+            let v3b: Int = list_get(vals, g + 3);
+            let v4: Int = list_get(vals, g + 4);
+            let b2: Int = ((v3b % 16) * 16) + (v4 / 2);
+            buf = bytes_push(buf, b2);
+        }
+        if left >= 7 {
+            let v4b: Int = list_get(vals, g + 4);
+            let v5: Int = list_get(vals, g + 5);
+            let v6: Int = list_get(vals, g + 6);
+            let b3: Int = ((v4b % 2) * 128) + (v5 * 4) + (v6 / 8);
+            buf = bytes_push(buf, b3);
+        }
+        if left >= 8 {
+            let v6b: Int = list_get(vals, g + 6);
+            let v7: Int = list_get(vals, g + 7);
+            let b4: Int = ((v6b % 8) * 32) + v7;
+            buf = bytes_push(buf, b4);
+        }
+        g = g + 8;
+    }
+
+    let res_str: String = bytes_to_str(buf);
+    return Ok(res_str);
+}

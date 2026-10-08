@@ -1,0 +1,11 @@
+Package: oobase32
+Version: 0.2.0-1
+Section: utils
+Priority: optional
+Architecture: amd64
+Maintainer: openOODA-tools <ops@openooda.org>
+Depends: libc6
+Description: BASE32 ENCODER
+ Base32 encoder and decoder with Crockford and RFC 4648 alphabet options.
+ Capability-bounded openOODA utility with zero ambient authority,
+ oote theme palettes, and native Model Context Protocol (MCP) surface.
